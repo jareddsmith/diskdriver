@@ -132,7 +132,9 @@ int nonblocking_read_sector(SectorDescriptor *sd, Voucher **v){
 int redeem_voucher(Voucher *v, SectorDescriptor **sd){
 	Voucher * vouch = (Voucher *) v;
 	
-	if (vouch->status == -1) pthread_cond_wait(&(vouch->vCond), &(vouch->vMutex));
+	pthread_mutex_lock(&(vouch->vMutex));
+	
+	while (vouch->status == -1) pthread_cond_wait(&(vouch->vCond), &(vouch->vMutex));
 	if (vouch->type == 1) blocking_put_sd(free_secs, vouch->sDesc);
 	if (vouch->type == 0) *sd = vouch->sDesc;
 	
