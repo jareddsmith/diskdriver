@@ -32,6 +32,7 @@ static void * runRead(){
 		pthread_mutex_unlock(&(vouch->vMutex));
 		pthread_cond_signal(&(vouch->vCond));
 	}
+	return 0;
 }
 
 static void * runWrite(){
@@ -42,6 +43,7 @@ static void * runWrite(){
 		pthread_mutex_unlock(&(vouch->vMutex));
 		pthread_cond_signal(&(vouch->vCond));
 	}
+	return 0;
 }
 
 void init_disk_driver(DiskDevice *dd, void *mem_start, unsigned long mem_length, FreeSectorDescriptorStore **fsds){
@@ -88,7 +90,7 @@ int nonblocking_write_sector(SectorDescriptor *sd, Voucher **v){
 	pthread_cond_init(&(vouch->vCond), NULL);
 	vouch->sDesc = sd;
 	
-	/* if you are able to queue up sector descriptor immediately
+	/* if you are able to queue up sector descriptor immediately */
  	/* return a Voucher through *v and return 1 */
  	/* otherwise, return 0 */
 	*v = (Voucher *) vouch;
@@ -120,7 +122,7 @@ int nonblocking_read_sector(SectorDescriptor *sd, Voucher **v){
 	pthread_cond_init(&(vouch->vCond), NULL);
 	vouch->sDesc = sd;
 	
-	/* if you are able to queue up sector descriptor immediately
+	/* if you are able to queue up sector descriptor immediately */
  	/* return a Voucher through *v and return 1 */
  	/* otherwise, return 0 */
 	*v = (Voucher *) vouch;
