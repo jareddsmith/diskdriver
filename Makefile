@@ -8,6 +8,6 @@ my_demo: $(OBJECTS)
 	cc -o my_demo $(OBJECTS) -lpthread
 
 clean:
-	rm -f *.o my_demo
+	rm -f diskdriver.o my_demo
 
 diskdriver.o: diskdriver.h diskdriver.c
