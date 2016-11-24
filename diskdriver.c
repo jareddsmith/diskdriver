@@ -149,6 +149,12 @@ int nonblocking_read_sector(SectorDescriptor *sd, Voucher **v){
 	return nonblockingWriteBB(readBuffer, *v);	/* Adds a non-blocking read to the read buffer */
 }
 
+/*
+* the following call is used to retrieve the status of the read or write
+* the return value is 1 if successful, 0 if not
+* the calling application is blocked until the read/write has completed
+* if a successful read, the associated SectorDescriptor is returned in *sd
+*/
 int redeem_voucher(Voucher *v, SectorDescriptor **sd){
 	Voucher * vouch = (Voucher *) v;
 	
@@ -156,7 +162,7 @@ int redeem_voucher(Voucher *v, SectorDescriptor **sd){
 	
 	while (vouch->status == -1) pthread_cond_wait(&(vouch->vCond), &(vouch->vMutex));
 	if (vouch->type == 1) blocking_put_sd(free_secs, vouch->sDesc);
-	if (vouch->type == 0) *sd = vouch->sDesc;
+	else if (vouch->type == 0) *sd = vouch->sDesc;
 	
 	int ret = vouch->status;
 	pthread_mutex_unlock(&(vouch->vMutex));
