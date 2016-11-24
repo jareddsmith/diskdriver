@@ -1,3 +1,6 @@
+/* Jared Smith 951452843 CIS 415 Project 2 */
+/* This is my own work */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
