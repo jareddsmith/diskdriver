@@ -24,6 +24,19 @@ struct voucher {
 	SectorDescriptor * sDesc;	/* Sector descriptor to be used */
 };
 
+static void * init_vouch(int type, SectorDescriptor *sd, Voucher **v){
+	Voucher * vouch = (Voucher *) malloc(sizeof(Voucher));	/* Initialize a new voucher */
+	vouch->status = -1;					/* Initial status of voucher */
+	vouch->type = type;					/* Designates the voucher with the type given */	
+	pthread_mutex_init(&(vouch->vMutex), NULL);		/* Initialize the voucher's mutex */
+	pthread_cond_init(&(vouch->vCond), NULL);		/* Initialize the voucher's condition */
+	vouch->sDesc = sd;					/* Initialize the voucher's sector desc. */
+								/* as the one passed in */
+	*v = (Voucher *) vouch;					/* Assigns the newly created voucher to the */
+								/* voucher passed in by the function */
+	return 0;
+}
+
 static void * runRead(){
 	while (1){
 		Voucher * vouch = (Voucher *) blockingReadBB(readBuffer);	/* Assigns the voucher with one from the read buffer */
@@ -63,89 +76,43 @@ void init_disk_driver(DiskDevice *dd, void *mem_start, unsigned long mem_length,
 	pthread_create(&readThread, NULL, &runRead, NULL);
 	pthread_create(&writeThread, NULL, &runWrite, NULL);
 }
-
-static void * init_vouch(int type, SectorDescriptor *sd, Voucher **v){
-	Voucher * vouch = (Voucher *) malloc(sizeof(Voucher));	/* Initialize a new voucher */
-	vouch->status = -1;					/* Initial status of voucher */
-	vouch->type = type;					/* Designates the voucher with the type given */	
-	pthread_mutex_init(&(vouch->vMutex), NULL);		/* Initialize the voucher's mutex */
-	pthread_cond_init(&(vouch->vCond), NULL);		/* Initialize the voucher's condition */
-	vouch->sDesc = sd;					/* Initialize the voucher's sector desc. */
-								/* as the one passed in */
-	*v = (Voucher *) vouch;					/* Assigns the newly created voucher to the */
-								/* voucher passed in by the function */
-	return 0;
-} 
+ 
 
 void blocking_write_sector(SectorDescriptor *sd, Voucher **v){
 	/* Queue up sector descriptor for a blocking write */
 	/* return a Voucher through *v for eventual synchronization by application */
  	/* do not return until it has been successfully queued */
+ 	
 	init_vouch(1, sd, v);
 	blockingWriteBB(writeBuffer, *v);		/* Adds a blocking write to the write buffer */
 }
 
 int nonblocking_write_sector(SectorDescriptor *sd, Voucher **v){
-	/* Queue up sector descriptor for a non-blocking write */
-	/* Initialize a new voucher */
-	Voucher * vouch = (Voucher *) malloc(sizeof(Voucher));
-	
-	vouch->status = -1;				/* Initial status of voucher */
-	vouch->type = 1;				/* Designates the voucher for writing */
-	pthread_mutex_init(&(vouch->vMutex), NULL);	/* Initialize the voucher's mutex */
-	pthread_cond_init(&(vouch->vCond), NULL);	/* Initialize the voucher's condition */
-	vouch->sDesc = sd;				/* Initialize the voucher's sector desc. */
-							/* as the one passed in */								
-	
+	/* Queue up sector descriptor for a non-blocking write */							
 	/* if you are able to queue up sector descriptor immediately */
  	/* return a Voucher through *v and return 1 */
  	/* otherwise, return 0 */
  	
-	*v = (Voucher *) vouch;				/* Assigns the newly created voucher to the */
-							/* voucher passed in by the function */
-												
+	init_vouch(1, sd, v);
 	return nonblockingWriteBB(writeBuffer, *v);	/* Adds a non-blocking write to the write buffer */
 }
 
 void blocking_read_sector(SectorDescriptor *sd, Voucher **v){
 	/* Queue up sector descriptor for a blocking read */
-	/* Initialize a new voucher */
-	Voucher * vouch = (Voucher *) malloc(sizeof(Voucher));
-	
-	vouch->status = -1;				/* Initial status of voucher */
-	vouch->type = 0;				/* Designates the voucher for reading */
-	pthread_mutex_init(&(vouch->vMutex), NULL);	/* Initialize the voucher's mutex */
-	pthread_cond_init(&(vouch->vCond), NULL);	/* Initialize the voucher's condition */
-	vouch->sDesc = sd;				/* Initialize the voucher's sector desc. */
-							/* as the one passed in */
-	
 	/* return a Voucher through *v for eventual synchronization by application */
 	/* do not return until it has been successfully queued */
 	
-	*v = (Voucher *) vouch;				/* Assigns the newly created voucher to the */
-							/* voucher passed in by the function */
-	
+	init_vouch(0, sd, v);
 	blockingWriteBB(readBuffer, *v);		/* Adds a blocking read to the read buffer */
 }
 
 int nonblocking_read_sector(SectorDescriptor *sd, Voucher **v){
 	/* Queue up sector descriptor for a non-blocking read */
-	/* Initialize a new voucher */
-	Voucher * vouch = (Voucher *) malloc(sizeof(Voucher));
-	
-	vouch->status = -1; 				/* Initial status of voucher */
-	vouch->type = 1; 				/* Designates the voucher for reading */
-	pthread_mutex_init(&(vouch->vMutex), NULL);	/* Initialize the voucher's mutex */
-	pthread_cond_init(&(vouch->vCond), NULL);	/* Initialize the voucher's condition */
-	vouch->sDesc = sd; 				/* Initialize the voucher's sector desc. */
-							/* as the one passed in */
-	
 	/* if you are able to queue up sector descriptor immediately */
  	/* return a Voucher through *v and return 1 */
  	/* otherwise, return 0 */
-	*v = (Voucher *) vouch; 			/* Assigns the newly created voucher to the */
-							/* voucher passed in by the function */
 	
+	init_vouch(0, sd, v);
 	return nonblockingWriteBB(readBuffer, *v);	/* Adds a non-blocking read to the read buffer */
 }
 
